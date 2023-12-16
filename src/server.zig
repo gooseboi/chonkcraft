@@ -18,11 +18,10 @@ pub const Server = struct {
     pub fn init(addr: Address) !Self {
         var server = StreamServer.init(.{ .reuse_address = true });
         try server.listen(addr);
-        var _server = Server{
+        return Server{
             .server = server,
             .clients = ClientList.init(std.heap.page_allocator),
         };
-        return _server;
     }
 
     pub fn deinit(self: *Self) void {

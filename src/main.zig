@@ -41,7 +41,7 @@ fn read_varint(buf: *[]u8) ReadError!usize {
 
 fn read_string(buf: *[]u8) ReadError![]u8 {
     const str_len = try read_varint(buf);
-    var str = (buf.*)[0..str_len];
+    const str = (buf.*)[0..str_len];
     buf.* = (buf.*)[str_len..];
     return str;
 }
