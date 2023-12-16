@@ -1,6 +1,8 @@
 const std = @import("std");
 const net = std.net;
 
+const Server = @import("server.zig").Server;
+
 fn print(comptime fmt: []const u8, args: anytype) void {
     const stdout_file = std.io.getStdOut().writer();
     var bw = std.io.bufferedWriter(stdout_file);
@@ -56,39 +58,9 @@ fn read_short(buf: *[]u8) ReadError!i16 {
 pub fn main() !void {
     const address = net.Address.initIp4([4]u8{ 127, 0, 0, 1 }, 8080);
 
-    var server = net.StreamServer.init(.{ .reuse_address = true });
-    defer server.deinit();
-    try server.listen(address);
+    var server = try Server.init(address);
     print("Server listening on {}\n", .{address});
+    defer server.deinit();
 
-    const conn = try server.accept();
-    defer conn.stream.close();
-
-    while (true) {
-        var buf: [1024]u8 = undefined;
-        const msg_size = try conn.stream.read(buf[0..]);
-        print("Read {} bytes from stream\n", .{msg_size});
-
-        var msg = buf[0..msg_size];
-        const msg_len = try read_varint(&msg);
-        print("Read msg_len {}\n", .{msg_len});
-
-        const packet_id = try read_varint(&msg);
-        print("Read packet id {}\n", .{packet_id});
-        const ver = try read_varint(&msg);
-        print("Read version {}\n", .{ver});
-
-        const addr = try read_string(&msg);
-        print("Addr len `{}`\n", .{addr.len});
-        print("Addr `{s}`\n", .{addr});
-        const port = try read_short(&msg);
-        print("Port `{}`\n", .{port});
-
-        const next_state = try read_varint(&msg);
-        print("Next state was `{}`\n", .{next_state});
-
-        print("Leftover(bytes) `{any}`\n", .{msg});
-        print("Leftover(str) `{s}`\n", .{msg});
-        print("\n", .{});
-    }
+    try server.run();
 }
